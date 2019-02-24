@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 //import "github.com/Arachnid/solidity-stringutils/strings.sol";
 import './WRCToken.sol';
+
 pragma experimental ABIEncoderV2;
 contract WRC is WRCToken
 {
@@ -32,8 +33,21 @@ uint actualSetReusePercentage ;
            address entityKey;
         }
         Entity[] public entities;
+address private ownerAddr;
 
+    constructor() public
+    {
+  ownerAddr = msg.sender;
+    }
 
+        function isOwner() public view returns(bool) {
+        return msg.sender == ownerAddr;
+      }
+
+      modifier onlyOwner() {
+    require(isOwner());
+    _;
+  }
         mapping(uint => Entity) EntityMap;  //*
 
         uint entityCount;
@@ -87,7 +101,7 @@ uint actualSetReusePercentage ;
 
 
       function RegisterEntity(string memory _ename,string memory _addr,string memory _entityType,
-        string[]  memory _plants, address[] memory _inletIds,address[] memory _outletIds,address _entityKey) public
+        string[]  memory _plants, address[] memory _inletIds,address[] memory _outletIds,address _entityKey) public onlyOwner
       {
             //string memory _eId = "fdfdfdf" ; //keccak256(abi.encodePacked(_ename)) ; //uint(keccak256(abi.encodePacked(_ename)));
             string memory _eId = uint2str(uint(keccak256(abi.encodePacked(_ename))));
@@ -128,7 +142,7 @@ uint actualSetReusePercentage ;
 
     }
 
-     function FetchEntityKey(string memory _eId) public view returns(address) //onlyOwner
+     function FetchEntityKey(string memory _eId) public onlyOwner view returns(address)
      {
        for(uint i=0;i<entities.length;i++)
        {
@@ -171,7 +185,7 @@ uint actualSetReusePercentage ;
        return _entityId;
      }
 
-     function FetchWaterPerMeter(string memory _entityID,string memory _inletOrOutlet) public returns(uint)
+     function FetchWaterPerMeter(string memory _entityID,string memory _inletOrOutlet) public onlyOwner returns(uint)
      {
        string[] memory _inletIds;
        uint _currentTIme = now;
@@ -217,7 +231,7 @@ uint actualSetReusePercentage ;
        return _waterVolume;
      }
 
-     function FetchWaterComponentsAmt(string memory _entityID) public returns(uint,uint,uint,uint,uint) //onlyowner
+     function FetchWaterComponentsAmt(string memory _entityID) public onlyOwner returns(uint,uint,uint,uint,uint) //onlyowner
      {
        // string memory _presPhLevel;
        // string memory _presAvgSuspendedSolids;
@@ -242,7 +256,7 @@ uint actualSetReusePercentage ;
      }
 
 
-     function VerifyStandards(string memory entityName) public //onlyOwner
+     function VerifyStandards(string memory entityName) public onlyOwner //onlyOwner
       {
         //fetch inlet water consumed.
 
