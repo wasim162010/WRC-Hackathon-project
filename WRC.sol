@@ -35,6 +35,14 @@ uint actualSetReusePercentage ;
         Entity[] public entities;
 address private ownerAddr;
 
+struct EntityPenalty
+{
+  string name;
+  uint penalty;
+  bool isSettled;
+}
+ EntityPenalty[] penalties;
+
     constructor() public
     {
   ownerAddr = msg.sender;
@@ -268,23 +276,59 @@ address private ownerAddr;
         (actualPhLevel, actualAvgSuspendedSolids,actualAvgHardness,actualAvgOilAndGrease,actualSetBOD) =  FetchWaterComponentsAmt(FetchEntityId(entityName));
 
          uint _percReUse =  (_outletWater/ _inletWater) * 100;
-
+         uint _penaltyAmt=0;
+          for(uint b=0; b<penalties.length; b++)
+          {
+            if(uint(keccak256(abi.encodePacked(penalties[b].name))) == uint(keccak256(abi.encodePacked(entityName)))
+              && !penalties[b].isSettled)
+            {
+              _penaltyAmt = penalties[b].penalty;
+            }
+          }
          if(_percReUse >= _presSetReusePercentage )
          {
            if(actualPhLevel <= _presPhLevel && actualAvgSuspendedSolids <= _presAvgSuspendedSolids && actualAvgHardness <= _presAvgHardness
            && actualAvgOilAndGrease <= _presAvgOilAndGrease && actualSetBOD <= _presSetBOD)
            {
              // code to transfer token.
-             if(_percReUse == _presSetReusePercentage )
-                transferFrom(msg.sender,FetchEntityKey(entityName),1);
+             if(_percReUse == _presSetReusePercentage)
+             {
+               if(_penaltyAmt >1 )
+                 transferFrom(msg.sender,FetchEntityKey(entityName),(_penaltyAmt-1));
+                else if(_penaltyAmt < 1 )
+                 transferFrom(msg.sender,FetchEntityKey(entityName),(1 - _penaltyAmt));
+                 else
+                 transferFrom(msg.sender,FetchEntityKey(entityName),0);
+             }
              if(_percReUse > _presSetReusePercentage )
              {
                uint extraPrec= _percReUse - _presSetReusePercentage;
                uint tokenamt=  1 + (extraPrec/100)  ;
+              if(_penaltyAmt >1 )
+                tokenamt= _penaltyAmt - tokenamt;
+              else if(_penaltyAmt <= 1 )
+               tokenamt= tokenamt - _penaltyAmt;
                transferFrom(msg.sender,FetchEntityKey(entityName),tokenamt);
+
+               for(uint b=0; b<penalties.length; b++)
+               {
+                 if(uint(keccak256(abi.encodePacked(penalties[b].name))) == uint(keccak256(abi.encodePacked(entityName)))
+                   && !penalties[b].isSettled)
+                 {
+                   penalties[b].isSettled= true;
+                 }
+               }
+
              }
-                   //transferFrom(msg.sender,FetchEntityKey(entityName),1);
+
            }
+         }
+
+         else if(_percReUse < _presSetReusePercentage
+         || actualPhLevel > _presPhLevel || actualAvgSuspendedSolids > _presAvgSuspendedSolids ||  actualAvgHardness > _presAvgHardness
+         || actualAvgOilAndGrease > _presAvgOilAndGrease || actualSetBOD > _presSetBOD )
+         {
+                penalties.push(EntityPenalty(entityName,25, false));
          }
       }
 
