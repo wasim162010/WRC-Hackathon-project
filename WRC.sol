@@ -328,7 +328,7 @@ struct EntityPenalty
          || actualPhLevel > _presPhLevel || actualAvgSuspendedSolids > _presAvgSuspendedSolids ||  actualAvgHardness > _presAvgHardness
          || actualAvgOilAndGrease > _presAvgOilAndGrease || actualSetBOD > _presSetBOD )
          {
-                penalties.push(EntityPenalty(entityName,25, false));
+                penalties.push(EntityPenalty(entityName,(_presSetReusePercentage - _percReUse), false));
          }
       }
 
