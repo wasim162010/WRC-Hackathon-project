@@ -104,47 +104,7 @@ contract CLASS is WRCToken
     //bonuc calculation
     //bonus calculation for ICO on purchase basis
 
-  function bonuscalico(uint256 y) private returns (uint256 cp){
-     x = y/(10**18);
-     uint bon;
-      if (x>=2 && x <5){
-          bon = 1;
-      }
-      else  if (x>=5 && x <15){
-          bon = 2;
-      }
-      else  if (x>=15 && x <25){
-          bon = 3;
-      }
-      else  if (x>=25 && x <40){
-          bon = 4;
-      }
-      else  if (x>=40 && x <60){
-          bon = 5;
-      }
-      else  if (x>=60 && x <70){
-          bon = 6;
-      }
-      else  if (x>=70 && x <80){
-          bon = 7;
-      }
-      else  if (x>=80 && x <90){
-          bon = 8;
-      }
-     else  if (x>=90 && x <100){
-          bon = 9;
-      }
-      else  if (x>=100){
-          bon = 10;
-      }
-      else{
-      bon = 0;
-      }
-
-      return bon;
-  }
-
-
+  
     // what is the total supply of the ech tokens
      function totalSupply() public view returns (uint256 total_Supply) {
          total_Supply = _totalsupply;
@@ -161,7 +121,7 @@ contract CLASS is WRCToken
      // fees in sub-currencies; the command should fail unless the _from account has
      // deliberately authorized the sender of the message via some mechanism; we propose
      // these standardized APIs for approval:
-     function transferFrom( address _from, address _to, uint256 _amount )public returns (bool success) {
+     function transferFrom( address _from, address _to, uint256 _amount ) public returns (bool success) {
              require( _to != address(0));
              require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount >= 0);
              balances[_from] = (balances[_from]).sub(_amount);
