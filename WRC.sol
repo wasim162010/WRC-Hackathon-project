@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 //import "github.com/Arachnid/solidity-stringutils/strings.sol";
 import './WRCToken.sol';
 pragma experimental ABIEncoderV2;
-contract WRC
+contract WRC is WRCToken
 {
 //  using strings for *;
 //using WRCToken for *;
@@ -29,6 +29,7 @@ uint actualSetReusePercentage ;
            string[] recyclingPlants;
            address[] inletMeterIds; // inlet meter id
            address[] outletMeterIds; // outlet meter id
+           address entityKey;
         }
         Entity[] public entities;
 
@@ -86,12 +87,12 @@ uint actualSetReusePercentage ;
 
 
       function RegisterEntity(string memory _ename,string memory _addr,string memory _entityType,
-        string[]  memory _plants, address[] memory _inletIds,address[] memory _outletIds) public
+        string[]  memory _plants, address[] memory _inletIds,address[] memory _outletIds,address _entityKey) public
       {
             //string memory _eId = "fdfdfdf" ; //keccak256(abi.encodePacked(_ename)) ; //uint(keccak256(abi.encodePacked(_ename)));
             string memory _eId = uint2str(uint(keccak256(abi.encodePacked(_ename))));
 
-            entities.push(Entity(_eId,_ename,_addr,_entityType,_plants,_inletIds,_outletIds ));
+            entities.push(Entity(_eId,_ename,_addr,_entityType,_plants,_inletIds,_outletIds, _entityKey));
       }
 
       function uint2str(uint _i) internal pure returns (string memory _uintAsString)
@@ -127,19 +128,34 @@ uint actualSetReusePercentage ;
 
     }
 
-     function FetchEntityType(string memory _eId) public view returns(string memory) //onlyOwner
+     function FetchEntityKey(string memory _eId) public view returns(address) //onlyOwner
      {
        for(uint i=0;i<entities.length;i++)
        {
 
            if(uint(keccak256(abi.encodePacked(entities[i].entityId))) == uint(keccak256(abi.encodePacked(_eId))))
            {
-            return entities[i].entityType;
+            return entities[i].entityKey;
            }
        }
 
      }
 
+
+     function FetchEntityType(string memory _entityName) public view returns(string memory)
+     {
+       string memory _entityId;
+       for(uint i=0;i<entities.length;i++)
+       {
+           //if(entities[i].name== "entityName")
+           if(uint(keccak256(abi.encodePacked(entities[i].name))) == uint(keccak256(abi.encodePacked(_entityName))))
+           {
+             _entityId=entities[i].entityId;
+             break;
+           }
+       }
+       return _entityId;
+     }
      function FetchEntityId(string memory _entityName) public view returns(string memory)
      {
        string memory _entityId;
@@ -234,12 +250,7 @@ uint actualSetReusePercentage ;
         uint _outletWater = FetchWaterPerMeter(FetchEntityId(entityName),"outlet");
         // fetch inlet and outlet meter
         (_presPhLevel, _presAvgSuspendedSolids,_presAvgHardness,_presAvgOilAndGrease,_presSetBOD,_presSetReusePercentage) = FetchSetStandards(FetchEntityType(FetchEntityId(entityName)));
-        // uint  actualPhLevel;
-        // uint  actualAvgSuspendedSolids;
-        // uint actualAvgHardness;
-        // uint  actualAvgOilAndGrease;
-        // uint actualSetBOD;
-        // uint actualSetReusePercentage ;
+
         (actualPhLevel, actualAvgSuspendedSolids,actualAvgHardness,actualAvgOilAndGrease,actualSetBOD) =  FetchWaterComponentsAmt(FetchEntityId(entityName));
 
          uint _percReUse =  (_outletWater/ _inletWater) * 100;
@@ -250,6 +261,15 @@ uint actualSetReusePercentage ;
            && actualAvgOilAndGrease <= _presAvgOilAndGrease && actualSetBOD <= _presSetBOD)
            {
              // code to transfer token.
+             if(_percReUse == _presSetReusePercentage )
+                transferFrom(msg.sender,FetchEntityKey(entityName),1);
+             if(_percReUse > _presSetReusePercentage )
+             {
+               uint extraPrec= _percReUse - _presSetReusePercentage;
+               uint tokenamt=  1 + (extraPrec/100)  ;
+               transferFrom(msg.sender,FetchEntityKey(entityName),tokenamt);
+             }
+                   //transferFrom(msg.sender,FetchEntityKey(entityName),1);
            }
          }
       }
